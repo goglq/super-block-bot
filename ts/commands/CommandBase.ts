@@ -1,16 +1,14 @@
 import {Message} from 'discord.js';
 
-export class CommandBase {
-    private _commandName : string;
+export abstract class CommandBase {
+    protected _commandName : string;
     public get CommandName() : string {
         return this._commandName;
     } 
 
-    constructor(){
-
+    constructor(commandName? : string){
+        this._commandName = commandName;
     }
 
-    public execute(msg : Message, args : string[]) : void{
-        
-    }
+    public abstract execute(msg : Message, args : string[]) : void;
 }

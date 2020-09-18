@@ -1,18 +1,22 @@
-import {Client, Collection, Message} from 'discord.js';
+import {Client, Message} from 'discord.js';
 import {CommandBase} from './commands/CommandBase';
 
-export class Bot{
+interface IDisposable{
+    dispose(): void;
+}
+
+export class Bot implements IDisposable{
     private _client : Client;
     private _prefix : string;
     private _token : string;
-    private _commands : Collection<CommandBase, Function>;
+    private _commands : Array<CommandBase>;
 
     constructor(){
         this._client = new Client();
         const {prefix, token} = require('../botconfig.json');
         this._token = token;
         this._prefix = prefix;
-        this._client.on('message', this.onMessageRecieved)
+        this._client.on('message', (message : Message) => this.onMessageRecieved(message, this._prefix));
     }
 
     public start() : void{
@@ -21,10 +25,25 @@ export class Bot{
             .catch(console.error);
     }
 
-    public onMessageRecieved(msg : Message) : void{
-        if(!msg.content.startsWith(this._prefix) || msg.author.bot) return;
+    public setCommands(commands : Array<CommandBase>){
+        this._commands = commands;
+    }
 
-        const args = msg.content.slice(this._prefix.length).trim().split(' ');
-        const command = args.shift().toLowerCase();
+    private onMessageRecieved(msg : Message, prefix : string) : void{
+        console.log(prefix);
+        if(!msg.content.startsWith(prefix) || msg.author.bot) return;
+
+        const args : string[] = msg.content.slice(this._prefix.length).trim().split(' ');
+        const commandName : string = args.shift().toLowerCase();
+
+        for(const command of this._commands){
+            if(command.CommandName === commandName){
+                command.execute(msg, args);
+            }
+        }
+    }
+
+    public dispose(): void {
+        this._client.destroy();
     }
 }
