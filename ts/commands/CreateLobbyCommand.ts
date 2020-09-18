@@ -29,8 +29,9 @@ export class CreateLobbyCommand extends CommandBase{
                 permissions: ['CONNECT', 'VIEW_CHANNEL']
             }
         })
+        let everyOne : Role = msg.guild.roles.everyone;
 
-        let everyOne : Role = await msg.guild.roles.resolve('752941689638748332');
+        msg.guild.roles.everyone
 
         msg.guild.channels.create(lobbyName, { 
             type: 'voice', 
