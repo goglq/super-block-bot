@@ -11,39 +11,49 @@ export class CreateLobbyCommand extends CommandBase{
 
     public execute(msg: Message, args: string[]): void {
         let parentCategory : CategoryChannel =  <CategoryChannel>msg.guild.channels.resolve('754408581167710358');
-        let lobbyName : string = args.length >= 1 ? args[0] : `${this.DefaultLobbyName} #${parentCategory.children.size}`;
+        let lobbyName : string = args.length >= 1 ? args.shift() : `${this.DefaultLobbyName} #${parentCategory.children.size}`;
         if(args.indexOf('-p') > -1){
-            this.createPrivateChannelAsync(msg, lobbyName, parentCategory);
+            args.shift();
+            this.createPrivateChannelAsync(msg, lobbyName, parentCategory, args);
         }
         else{
-            this.createPublicChannel(msg, lobbyName, parentCategory)
+            this.createPublicChannel(msg, lobbyName, parentCategory);
         }
     }
 
-    private async createPrivateChannelAsync(msg: Message, lobbyName: string, parentCategory: CategoryChannel): Promise<void>{
+    private async createPrivateChannelAsync(msg: Message, lobbyName: string, parentCategory: CategoryChannel, args: string[]): Promise<void>{
 
         let newRole : Role = await msg.guild.roles.create({
                 data: { 
                 name: lobbyName, 
                 color: 'DEFAULT',
-                permissions: ['CONNECT', 'VIEW_CHANNEL']
             }
         })
-        let everyOne : Role = msg.guild.roles.everyone;
 
-        msg.guild.roles.everyone
+        let everyOne : Role = msg.guild.roles.everyone;
+        
+        msg.member.roles.add(newRole);
+        for(const mention of args){
+            let memberId: string = mention.slice(3, mention.length - 1);
+            console.log(memberId);
+            msg.guild.members.resolve(memberId).roles.add(newRole);
+        }
+
 
         msg.guild.channels.create(lobbyName, { 
             type: 'voice', 
             parent: parentCategory,
             permissionOverwrites: [
-                {id: newRole },
+                {id: newRole, allow: ['VIEW_CHANNEL', 'CONNECT']},
                 {id: everyOne, deny: ['VIEW_CHANNEL', 'CONNECT']}
             ] 
         }).then(channel => {
-            console.log(channel);
-            setTimeout(() => {
-                channel.delete();
+            console.log(channel.permissionOverwrites);
+            setTimeout(async () => {
+                if(channel.members.size == 0){
+                    await channel.delete();
+                    await newRole.delete();
+                }
             }, 5000);
         }).catch(console.error);
     }
@@ -52,8 +62,8 @@ export class CreateLobbyCommand extends CommandBase{
         msg.guild.channels.create(lobbyName, { type: 'voice', parent: parentCategory})
             .then(channel => {
                 console.log(channel);
-                setTimeout(() => {
-                    channel.delete();
+                setTimeout(async () => {
+                    if(channel.members.size == 0) await channel.delete();
                 }, 5000);
             })
             .catch(console.error);

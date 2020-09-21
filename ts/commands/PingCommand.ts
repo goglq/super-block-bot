@@ -7,6 +7,6 @@ export class PingCommand extends CommandBase{
     }
 
     public execute(msg: Message, args: string[]): void {
-        msg.channel.send('pong!');
+        msg.client.destroy();
     }
 }
