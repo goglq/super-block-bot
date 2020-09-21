@@ -1,4 +1,4 @@
-import {Client, Message, VoiceState} from 'discord.js';
+import {CategoryChannel, Client, Message, VoiceChannel, VoiceState} from 'discord.js';
 import {CommandBase} from './commands/CommandBase';
 
 interface IDisposable{
@@ -20,7 +20,7 @@ export class Bot implements IDisposable{
         this._token = token;
         this._prefix = prefix;
         this._client.on('message', (message : Message) => this.onMessageRecieved(message, this._prefix));
-        this._client.on('voiceStateUpdate', (oldState, newState) => this.onVoiceStateUpdate(oldState, newState));
+        this._client.on('voiceStateUpdate', async (oldState, newState) => await this.onVoiceStateUpdate(oldState, newState));
     }
 
     public start() : void{
@@ -47,20 +47,39 @@ export class Bot implements IDisposable{
         }
     }
 
-    private onVoiceStateUpdate(oldState : VoiceState, newState : VoiceState) : void{
+    private async onVoiceStateUpdate(oldState : VoiceState, newState : VoiceState) : Promise<void>{
+        await this.deleteLobbyChannelsAndRoles(oldState, newState);
+        await this.deleteCategoriesAndChildren(oldState, newState);
+    }
+
+    private async deleteLobbyChannelsAndRoles(oldState : VoiceState, newState : VoiceState) {
         if(oldState.channel == null || oldState.channel.members.size != 0 
             || oldState.channel.parentID != this._lobbyCategoryId || oldState.channelID == this._waitChannelId ) return;
         
         console.log(`members in chat: ${oldState.channel.members.size}`);
         console.log(`oldState.channel exists: ${oldState.channel != null}`);
         console.log(`newState.channel exists: ${newState.channel != null}`);
-        oldState.channel.delete().then(console.log).catch(console.error);
+        await oldState.channel.delete();
 
-        if(oldState.channel.permissionOverwrites.size > 1){
+        if(oldState.channel.permissionOverwrites.size > 0){
             let poID : string = oldState.channel.permissionOverwrites.filter(po => po.id != oldState.guild.roles.everyone.id).firstKey();
             console.log(poID);
-            oldState.guild.roles.resolve(poID).delete().then(console.log).catch(console.error);
+            await oldState.guild.roles.resolve(poID).delete();
         }
+    }
+
+    private async deleteCategoriesAndChildren(oldState : VoiceState, newState : VoiceState) : Promise<void>{
+        if(oldState.channel == null || oldState.channel.members.size != 0
+            || oldState.channel.parentID == this._lobbyCategoryId || oldState.channelID == this._waitChannelId) return;
+
+        let parent : CategoryChannel = oldState.channel.parent;
+        for(const voiceChannel of parent.children.filter(i => typeof(i) == typeof(VoiceChannel)).values()){
+            if(voiceChannel.members.size != 0) return;
+        }
+        for(const channel of parent.children){
+            await channel[1].delete();
+        }
+        await parent.delete();
     }
 
     public dispose(): void {

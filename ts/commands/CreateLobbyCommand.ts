@@ -1,4 +1,5 @@
-import { CategoryChannel, GuildChannel, Message, PermissionOverwrites, Role, VoiceChannel } from "discord.js";
+import { sign } from "crypto";
+import { CategoryChannel, GuildChannel, GuildMember, Message, PermissionOverwrites, Role, VoiceChannel } from "discord.js";
 import { setTimeout } from "timers";
 import { CommandBase } from "./CommandBase";
 
@@ -33,12 +34,10 @@ export class CreateLobbyCommand extends CommandBase{
         let everyOne : Role = msg.guild.roles.everyone;
         
         msg.member.roles.add(newRole);
-        for(const mention of args){
-            let memberId: string = mention.slice(3, mention.length - 1);
-            console.log(memberId);
-            msg.guild.members.resolve(memberId).roles.add(newRole);
+        for(const user of msg.mentions.users){
+            let member :GuildMember = msg.guild.member(user[1]);
+            member.roles.add(newRole);
         }
-
 
         msg.guild.channels.create(lobbyName, { 
             type: 'voice', 
