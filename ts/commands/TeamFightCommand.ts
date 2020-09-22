@@ -1,4 +1,4 @@
-import { CategoryChannel, Message, VoiceChannel, Role } from "discord.js";
+import { CategoryChannel, Message, VoiceChannel, Role, GuildChannel } from "discord.js";
 import { CommandBase } from "./CommandBase";
 
 export class TeamFightCommand extends CommandBase{
@@ -68,6 +68,15 @@ export class TeamFightCommand extends CommandBase{
         });
         let firstTeamVoiceChannel : VoiceChannel = await this.CreateVoiceTeamChannel(msg, firstTeamName, roles[0], parentCategory);
         let secondTeamVoiceChannel : VoiceChannel = await this.CreateVoiceTeamChannel(msg, secondTeamName, roles[1], parentCategory);
+
+        setTimeout(async () => await this.DeleteVoiceChannelsOnTimeOut(parentCategory), 5000);
+    }
+
+    private async DeleteVoiceChannelsOnTimeOut(category :CategoryChannel) : Promise<void>{
+        for(const channel of category.children.values()){
+            await channel.delete();
+        }
+        await category.delete();
     }
 
     private async CreateVoiceTeamChannel(msg :Message, teamName :string, role :Role, parent :CategoryChannel) : Promise<VoiceChannel>{

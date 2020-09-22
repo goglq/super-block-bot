@@ -1,20 +1,36 @@
-import {CategoryChannel, Client, Message, VoiceChannel, VoiceState} from 'discord.js';
-import {CommandBase} from './commands/CommandBase';
+import { CategoryChannel, Client, Message, VoiceChannel, VoiceState } from 'discord.js';
+import { BotException } from './exceptions/BotException';
+import { NoRequiredParameterException } from './exceptions/NoRequiredParameterException';
+import { ICommand } from './interfaces/ICommand';
 
 interface IDisposable{
     dispose(): void;
 }
 
 export class Bot implements IDisposable{
+    private static _instance : Bot;
+
     private _client : Client;
     private _prefix : string;
     private _token : string;
-    private _commands : Array<CommandBase>;
+    private _commands : Array<ICommand>;
 
     private _waitChannelId : string = '754427337692545125';
     private _lobbyCategoryId : string = '754408581167710358';
 
-    constructor(){
+    public get LobbyCategoryId() : string{
+        return this._lobbyCategoryId;
+    }
+    public set LobbyCategoryId(value:string) {
+        this._lobbyCategoryId = value;
+    }
+
+    public static get Instance() : Bot{
+        if(this._instance === null) this._instance = new Bot();
+        return this._instance;
+    }
+
+    private constructor(){
         this._client = new Client();
         const {prefix, token} = require('../botconfig.json');
         this._token = token;
@@ -29,20 +45,29 @@ export class Bot implements IDisposable{
             .catch(console.error);
     }
 
-    public setCommands(commands : Array<CommandBase>){
+    public setCommands(commands : Array<ICommand>){
         this._commands = commands;
     }
 
     private onMessageRecieved(msg : Message, prefix : string) : void{
-        console.log(prefix);
-        if(!msg.content.startsWith(prefix) || msg.author.bot) return;
 
-        const args : string[] = msg.content.slice(this._prefix.length).trim().split(' ');
-        const commandName : string = args.shift().toLowerCase();
+        try
+        {
+            if(!msg.content.startsWith(prefix) || msg.author.bot) return;
 
-        for(const command of this._commands){
-            if(command.CommandName == commandName){
-                command.execute(msg, args);
+            const args : string[] = msg.content.slice(this._prefix.length).trim().split(' ');
+            const commandName : string = args.shift().toLowerCase();
+
+            for(const command of this._commands){
+                if(command.CommandName == commandName){
+                    command.execute(msg, args);
+                }
+            }
+        }
+        catch(error)
+        {
+            if(error instanceof BotException){
+                error.Handle(msg);
             }
         }
     }

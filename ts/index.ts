@@ -1,7 +1,6 @@
 import { CommandContainer } from './commands/CommandContainer';
-import { Bot } from './main';
+import { Bot } from './Bot';
 
-var bot : Bot = new Bot();
 var commandContainer : CommandContainer = new CommandContainer();
-bot.setCommands(commandContainer.Commands);
-bot.start();
+Bot.Instance.setCommands(commandContainer.Commands);
+Bot.Instance.start();
