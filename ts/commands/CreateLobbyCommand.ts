@@ -1,6 +1,7 @@
 import { CategoryChannel, GuildChannel, GuildMember, Message, PermissionOverwrites, Role, VoiceChannel } from "discord.js";
 import { setTimeout } from "timers";
 import { Bot } from "../Bot";
+import { NoRequiredIdException } from "../exceptions/NoRequiredIdException";
 import { NoRequiredParameterException } from "../exceptions/NoRequiredParameterException";
 import { CommandBase } from "./CommandBase";
 
@@ -11,7 +12,7 @@ export class CreateLobbyCommand extends CommandBase{
     }
 
     public execute(msg: Message, args: string[]): void {
-        if(Bot.Instance.LobbyCategoryId === null) throw new NoRequiredParameterException();
+        if(Bot.Instance.LobbyCategoryId === undefined) throw new NoRequiredIdException();
 
         let parentCategory : CategoryChannel =  <CategoryChannel>msg.guild.channels.resolve('754408581167710358');
         let lobbyName : string = args.length >= 1 ? args.shift() : `${this.DefaultLobbyName} #${parentCategory.children.size}`;
@@ -25,6 +26,8 @@ export class CreateLobbyCommand extends CommandBase{
     }
 
     private async createPrivateChannelAsync(msg: Message, lobbyName: string, parentCategory: CategoryChannel, args: string[]): Promise<void>{
+        if(msg.mentions.users.size < 1) throw new NoRequiredParameterException();
+        
         let newRole : Role = await msg.guild.roles.create({
                 data: { 
                 name: lobbyName, 
@@ -32,7 +35,6 @@ export class CreateLobbyCommand extends CommandBase{
             }
         });
         let everyOne : Role = msg.guild.roles.everyone;
-        
         msg.member.roles.add(newRole);
         for(const user of msg.mentions.users){
             let member :GuildMember = msg.guild.member(user[1]);

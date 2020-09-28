@@ -33,5 +33,7 @@ export abstract class BotException{
         this.Stack = new Error().stack;
     }
 
-    public abstract Handle(msg: Message);
+    public Handle(msg: Message){
+        msg.channel.send(this.Message);
+    }
 }
