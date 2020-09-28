@@ -1,6 +1,5 @@
-import { CategoryChannel, Client, Message, VoiceChannel, VoiceState } from 'discord.js';
+import { CategoryChannel, Client, Guild, GuildMember, Message, TextChannel, VoiceChannel, VoiceState, Role } from 'discord.js';
 import { BotException } from './exceptions/BotException';
-import { NoRequiredParameterException } from './exceptions/NoRequiredParameterException';
 import { ICommand } from './interfaces/ICommand';
 
 interface IDisposable{
@@ -15,8 +14,15 @@ export class Bot implements IDisposable{
     private _token : string;
     private _commands : Array<ICommand>;
 
+    private readonly _baseRoles : Array<string> = ['754494905199493150'];
+
     private _waitChannelId : string = '754427337692545125';
     private _lobbyCategoryId : string = '754408581167710358';
+    private _welcomeChannelId : string = '752942323243155597';
+
+    public get BaseRoles() :Array<string>{
+        return this._baseRoles;
+    }
 
     public get LobbyCategoryId() : string{
         return this._lobbyCategoryId;
@@ -25,8 +31,24 @@ export class Bot implements IDisposable{
         this._lobbyCategoryId = value;
     }
 
+    public get WaitChannelId() : string{
+        return this._waitChannelId;
+    }
+
+    public set WaitChannelId(value:string){
+        this._waitChannelId = value;
+    }
+
+    public get WelcomeChannelId() : string{
+        return this._welcomeChannelId;
+    }
+
+    public set WelcomeChannelId(value:string){
+        this._welcomeChannelId = value;
+    }
+
     public static get Instance() : Bot{
-        if(this._instance === null) this._instance = new Bot();
+        if(this._instance === undefined) this._instance = new Bot();
         return this._instance;
     }
 
@@ -37,6 +59,7 @@ export class Bot implements IDisposable{
         this._prefix = prefix;
         this._client.on('message', (message : Message) => this.onMessageRecieved(message, this._prefix));
         this._client.on('voiceStateUpdate', async (oldState, newState) => await this.onVoiceStateUpdate(oldState, newState));
+        this._client.on('guildMemberAdd', async (member : GuildMember) => await this.onGuildMemberAdd(member));
     }
 
     public start() : void{
@@ -72,6 +95,24 @@ export class Bot implements IDisposable{
         }
     }
 
+    private async onGuildMemberAdd(member : GuildMember) : Promise<void>{
+        let guild: Guild = member.guild;
+        this.sayHello(guild,member);
+        this.grantBasicRole(guild, member);
+    }
+
+    private grantBasicRole(guild: Guild, member: GuildMember) {
+        for(const roleId of this._baseRoles){
+            let playerRole: Role = guild.roles.resolve(roleId);
+            member.roles.add(playerRole);
+        }
+    }
+
+    private sayHello(guild : Guild, member: GuildMember) {
+        let welcomeChannel: TextChannel = <TextChannel>guild.channels.resolve(this._welcomeChannelId);
+        welcomeChannel.send(`Даров, <@${member.id}>!`);
+    }
+
     private async onVoiceStateUpdate(oldState : VoiceState, newState : VoiceState) : Promise<void>{
         await this.deleteLobbyChannelsAndRoles(oldState, newState);
         await this.deleteCategoriesAndChildren(oldState, newState);
@@ -81,16 +122,17 @@ export class Bot implements IDisposable{
         if(oldState.channel == null || oldState.channel.members.size != 0 
             || oldState.channel.parentID != this._lobbyCategoryId || oldState.channelID == this._waitChannelId ) return;
         
-        console.log(`members in chat: ${oldState.channel.members.size}`);
-        console.log(`oldState.channel exists: ${oldState.channel != null}`);
-        console.log(`newState.channel exists: ${newState.channel != null}`);
-        await oldState.channel.delete();
+        // console.log(`members in chat: ${oldState.channel.members.size}`);
+        // console.log(`oldState.channel exists: ${oldState.channel != null}`);
+        // console.log(`newState.channel exists: ${newState.channel != null}`);
 
         if(oldState.channel.permissionOverwrites.size > 0){
             let poID : string = oldState.channel.permissionOverwrites.filter(po => po.id != oldState.guild.roles.everyone.id).firstKey();
             console.log(poID);
             await oldState.guild.roles.resolve(poID).delete();
         }
+
+        await oldState.channel.delete();
     }
 
     private async deleteCategoriesAndChildren(oldState : VoiceState, newState : VoiceState) : Promise<void>{

@@ -1,4 +1,5 @@
 import { CategoryChannel, Message, VoiceChannel, Role, GuildChannel } from "discord.js";
+import { NoRequiredParameterException } from "../exceptions/NoRequiredParameterException";
 import { CommandBase } from "./CommandBase";
 
 export class TeamFightCommand extends CommandBase{
@@ -38,14 +39,10 @@ export class TeamFightCommand extends CommandBase{
 
     private async GrantRoles(msg :Message, args :string[], roles :[Role, Role]) : Promise<void>{
         let playerMentionStarts : [number, number] = [args.indexOf('-p1'), args.indexOf('-p2')]; 
-        if(playerMentionStarts[0] <= -1 && playerMentionStarts[1] <= -1) return;
+        if(playerMentionStarts[0] <= -1 || playerMentionStarts[1] <= -1) throw new NoRequiredParameterException();
 
-        if(playerMentionStarts[0] > -1){
-            this.GrantRole(msg, playerMentionStarts[0] + 1, roles[0], '-p2', args);
-        }
-        if(playerMentionStarts[1] > -1){
-            this.GrantRole(msg, playerMentionStarts[1] + 1, roles[1], '-p1', args);
-        }
+        this.GrantRole(msg, playerMentionStarts[0] + 1, roles[0], '-p2', args);
+        this.GrantRole(msg, playerMentionStarts[1] + 1, roles[1], '-p1', args);
     }
 
     private GrantRole(msg :Message, startIndex :number, role :Role, endFlag: string, args :string[]){
