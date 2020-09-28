@@ -1,6 +1,6 @@
 import { CategoryChannel, Message, VoiceChannel, Role, GuildChannel } from "discord.js";
-import { NoRequiredParameterException } from "../exceptions/NoRequiredParameterException";
-import { CommandBase } from "./CommandBase";
+import { NoRequiredParameterException } from "../../exceptions/NoRequiredParameterException";
+import { CommandBase } from "../CommandBase";
 
 export class TeamFightCommand extends CommandBase{
     constructor(commandName : string){

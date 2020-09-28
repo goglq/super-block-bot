@@ -12,6 +12,6 @@ export class SetLobbyCommand extends CommandBase{
         if(args.length < 1) throw new NoRequiredParameterException();
 
         Bot.Instance.LobbyCategoryId = args[0];
-        msg.channel.send(`Lobby Category was to ${args[0]}`);
+        msg.channel.send(`Lobby Category was set to ${args[0]}`);
     }
 }

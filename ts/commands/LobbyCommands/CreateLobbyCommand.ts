@@ -1,9 +1,9 @@
 import { CategoryChannel, GuildChannel, GuildMember, Message, PermissionOverwrites, Role, VoiceChannel } from "discord.js";
 import { setTimeout } from "timers";
-import { Bot } from "../Bot";
-import { NoRequiredIdException } from "../exceptions/NoRequiredIdException";
-import { NoRequiredParameterException } from "../exceptions/NoRequiredParameterException";
-import { CommandBase } from "./CommandBase";
+import { Bot } from "../../Bot";
+import { NoRequiredIdException } from "../../exceptions/NoRequiredIdException";
+import { NoRequiredParameterException } from "../../exceptions/NoRequiredParameterException";
+import { CommandBase } from "../CommandBase";
 
 export class CreateLobbyCommand extends CommandBase{
     private DefaultLobbyName : string = 'Lobby';
