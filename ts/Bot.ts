@@ -96,12 +96,14 @@ export class Bot implements IDisposable{
     }
 
     private async onGuildMemberAdd(member : GuildMember) : Promise<void>{
+        if(this._welcomeChannelId === undefined) return;
         let guild: Guild = member.guild;
         this.sayHello(guild,member);
         this.grantBasicRole(guild, member);
     }
 
     private grantBasicRole(guild: Guild, member: GuildMember) {
+        if(this._baseRoles.length < 1) return;
         for(const roleId of this._baseRoles){
             let playerRole: Role = guild.roles.resolve(roleId);
             member.roles.add(playerRole);
@@ -119,6 +121,7 @@ export class Bot implements IDisposable{
     }
 
     private async deleteLobbyChannelsAndRoles(oldState : VoiceState, newState : VoiceState) {
+        if(this._lobbyCategoryId === undefined) return;
         if(oldState.channel == null || oldState.channel.members.size != 0 
             || oldState.channel.parentID != this._lobbyCategoryId || oldState.channelID == this._waitChannelId ) return;
         
