@@ -18,7 +18,8 @@ export class TeamFightCommand extends CommandBase{
 
         let roles : [Role, Role] = await this.CreateRoles(msg, firstTeamName, secondTeamName);
         await this.GrantRoles(msg, args, roles);
-        await this.CreateVoiceChannels(msg, firstTeamName, secondTeamName, roles);
+        let parentCategory = await this.CreateVoiceChannels(msg, firstTeamName, secondTeamName, roles);
+        setTimeout(async () => await this.DeleteVoiceChannelsOnTimeOut(parentCategory, roles), 5000);
     }
 
     private async CreateRoles(msg :Message, firstTeamName :string, secondTeamName :string) :Promise<[Role , Role]>{
@@ -46,13 +47,14 @@ export class TeamFightCommand extends CommandBase{
     }
 
     private GrantRole(msg :Message, startIndex :number, role :Role, endFlag: string, args :string[]){
-        for(let i:number = startIndex; i < args.length || args[i] == endFlag; i++){
+        for(let i:number = startIndex; i < args.length && args[i] != endFlag; i++){
+            if(args[i] == '') continue;
             let memberId = args[i].slice(3, args[i].length - 1);
             msg.guild.members.resolve(memberId).roles.add(role);
         }
     }
 
-    private async CreateVoiceChannels(msg :Message, firstTeamName :string, secondTeamName :string, roles :[Role, Role]) : Promise<void>{
+    private async CreateVoiceChannels(msg :Message, firstTeamName :string, secondTeamName :string, roles :[Role, Role]) : Promise<CategoryChannel>{
         let parentCategory : CategoryChannel = await msg.guild.channels.create(`${firstTeamName} vs. ${secondTeamName}`, {type: 'category'});
         let commonVoiceChannel : VoiceChannel = await msg.guild.channels.create('Common Channel', {
             type: 'voice', 
@@ -66,10 +68,18 @@ export class TeamFightCommand extends CommandBase{
         let firstTeamVoiceChannel : VoiceChannel = await this.CreateVoiceTeamChannel(msg, firstTeamName, roles[0], parentCategory);
         let secondTeamVoiceChannel : VoiceChannel = await this.CreateVoiceTeamChannel(msg, secondTeamName, roles[1], parentCategory);
 
-        setTimeout(async () => await this.DeleteVoiceChannelsOnTimeOut(parentCategory), 5000);
+        return parentCategory;
     }
 
-    private async DeleteVoiceChannelsOnTimeOut(category :CategoryChannel) : Promise<void>{
+    private async DeleteVoiceChannelsOnTimeOut(category :CategoryChannel, roles: [Role, Role]) : Promise<void>{
+        for(const channel of category.children.values()){
+            if((<VoiceChannel>channel).members.size > 0) return;
+        }
+
+        for(const role of roles){
+            await role.delete();
+        }
+        
         for(const channel of category.children.values()){
             await channel.delete();
         }

@@ -3,3 +3,4 @@ src/commands/*.js
 src/
 *.js
 botconfig.json
+.env

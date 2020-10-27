@@ -1,14 +1,15 @@
 import { CategoryChannel, Client, Guild, GuildMember, Message, TextChannel, VoiceChannel, VoiceState, Role } from 'discord.js';
 import { BotException } from './exceptions/BotException';
 import { ICommand } from './interfaces/ICommand';
+import * as dotenv from 'dotenv';
 
 interface IDisposable{
     dispose(): void;
 }
 
-export class Bot implements IDisposable{
+export class Bot implements IDisposable{ 
     private static _instance : Bot;
-
+ 
     private _client : Client;
     private _prefix : string;
     private _token : string;
@@ -53,10 +54,10 @@ export class Bot implements IDisposable{
     }
 
     private constructor(){
+        //dotenv.config({path: __dirname+'/../.env'});
         this._client = new Client();
-        const {prefix, token} = require('../botconfig.json');
-        this._token = token;
-        this._prefix = prefix;
+        this._prefix = process.env.PREFIX;
+        this._token = process.env.TOKEN;
         this._client.on('message', (message : Message) => this.onMessageRecieved(message, this._prefix));
         this._client.on('voiceStateUpdate', async (oldState, newState) => await this.onVoiceStateUpdate(oldState, newState));
         this._client.on('guildMemberAdd', async (member : GuildMember) => await this.onGuildMemberAdd(member));
@@ -72,7 +73,7 @@ export class Bot implements IDisposable{
         this._commands = commands;
     }
 
-    private onMessageRecieved(msg : Message, prefix : string) : void{
+    private async onMessageRecieved(msg : Message, prefix : string) : Promise<void>{
 
         try
         {
@@ -86,6 +87,8 @@ export class Bot implements IDisposable{
                     command.execute(msg, args);
                 }
             }
+
+            await msg.delete();
         }
         catch(error)
         {
@@ -122,13 +125,9 @@ export class Bot implements IDisposable{
 
     private async deleteLobbyChannelsAndRoles(oldState : VoiceState, newState : VoiceState) {
         if(this._lobbyCategoryId === undefined) return;
-        if(oldState.channel == null || oldState.channel.members.size != 0 
-            || oldState.channel.parentID != this._lobbyCategoryId || oldState.channelID == this._waitChannelId ) return;
+        if((oldState.channel == null || oldState.channel.members.size > 0) 
+            || (oldState.channel.parentID != this._lobbyCategoryId || oldState.channelID != this._waitChannelId)) return;
         
-        // console.log(`members in chat: ${oldState.channel.members.size}`);
-        // console.log(`oldState.channel exists: ${oldState.channel != null}`);
-        // console.log(`newState.channel exists: ${newState.channel != null}`);
-
         if(oldState.channel.permissionOverwrites.size > 0){
             let poID : string = oldState.channel.permissionOverwrites.filter(po => po.id != oldState.guild.roles.everyone.id).firstKey();
             console.log(poID);
@@ -139,15 +138,17 @@ export class Bot implements IDisposable{
     }
 
     private async deleteCategoriesAndChildren(oldState : VoiceState, newState : VoiceState) : Promise<void>{
-        if(oldState.channel == null || oldState.channel.members.size != 0
-            || oldState.channel.parentID == this._lobbyCategoryId || oldState.channelID == this._waitChannelId) return;
+        if(oldState.channel == null && oldState.channel.parentID == this._lobbyCategoryId 
+            && oldState.channelID == this._waitChannelId) return;
 
         let parent : CategoryChannel = oldState.channel.parent;
         for(const voiceChannel of parent.children.filter(i => typeof(i) == typeof(VoiceChannel)).values()){
-            if(voiceChannel.members.size != 0) return;
+            if(voiceChannel.members.size > 0) return;
         }
         for(const channel of parent.children){
             await channel[1].delete();
+            let poID = channel[1].permissionOverwrites.firstKey();
+            await oldState.guild.roles.resolve(poID).delete();
         }
         await parent.delete();
     }
