@@ -54,7 +54,7 @@ export class Bot implements IDisposable{
     }
 
     private constructor(){
-        //dotenv.config({path: __dirname+'/../.env'});
+        dotenv.config({path: __dirname+'/../.env'});
         this._client = new Client();
         this._prefix = process.env.PREFIX;
         this._token = process.env.TOKEN;

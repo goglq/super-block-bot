@@ -1,1 +1,0 @@
-runBot: node ./src/index.js
