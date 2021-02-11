@@ -9,6 +9,11 @@ export class SetWaitChannelCommand extends CommandBase{
     }
     
     public execute(msg: Message, args: string[]): void {
+        if(msg.author.id != "261457418901389312")
+        {
+            msg.channel.send("You are not allowed to initialize this command.");
+            return;
+        }
         if(args.length < 1) throw new NoRequiredParameterException();
 
         Bot.Instance.WaitChannelId = args[0];

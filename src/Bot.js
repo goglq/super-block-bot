@@ -12,7 +12,7 @@ class Bot {
         this._welcomeChannelId = '752942323243155597';
         dotenv.config({ path: __dirname + '/../.env' });
         this._client = new discord_js_1.Client();
-        this._prefix = process.env.PREFIX;
+        this._prefix = '!';
         this._token = process.env.TOKEN;
         this._client.on('message', (message) => this.onMessageRecieved(message, this._prefix));
         this._client.on('voiceStateUpdate', async (oldState, newState) => await this.onVoiceStateUpdate(oldState, newState));
@@ -45,7 +45,7 @@ class Bot {
         return this._instance;
     }
     start() {
-        this._client.login(this._token)
+        this._client.login('NzU1MzU1NTU3MTA3NDY2MzAw.X2CFrg.IJf7kBEF4-1YITe_19dQBcBGKCE')
             .then(bot => console.log(`Successfully logged in as ${bot}`))
             .catch(console.error);
     }
@@ -61,14 +61,16 @@ class Bot {
             for (const command of this._commands) {
                 if (command.CommandName == commandName) {
                     command.execute(msg, args);
+                    break;
                 }
             }
-            await msg.delete();
+            //await msg.delete();
         }
         catch (error) {
             if (error instanceof BotException_1.BotException) {
                 error.Handle(msg);
             }
+            console.log(error);
         }
     }
     async onGuildMemberAdd(member) {

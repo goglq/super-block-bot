@@ -8,6 +8,10 @@ class ClearChatCommand extends CommandBase_1.CommandBase {
         super(commmandName);
     }
     execute(msg, args) {
+        if (msg.author.id != "261457418901389312") {
+            msg.channel.send("You are not allowed to initialize this command.");
+            return;
+        }
         if (args.length < 1)
             throw new NoRequiredParameterException_1.NoRequiredParameterException();
         let count = Number.parseInt(args[0]);

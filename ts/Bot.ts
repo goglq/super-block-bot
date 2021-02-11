@@ -2,10 +2,7 @@ import { CategoryChannel, Client, Guild, GuildMember, Message, TextChannel, Voic
 import { BotException } from './exceptions/BotException';
 import { ICommand } from './interfaces/ICommand';
 import * as dotenv from 'dotenv';
-
-interface IDisposable{
-    dispose(): void;
-}
+import { IDisposable } from './interfaces/IDIsposable';
 
 export class Bot implements IDisposable{ 
     private static _instance : Bot;
@@ -56,7 +53,7 @@ export class Bot implements IDisposable{
     private constructor(){
         dotenv.config({path: __dirname+'/../.env'});
         this._client = new Client();
-        this._prefix = process.env.PREFIX;
+        this._prefix = '!';
         this._token = process.env.TOKEN;
         this._client.on('message', (message : Message) => this.onMessageRecieved(message, this._prefix));
         this._client.on('voiceStateUpdate', async (oldState, newState) => await this.onVoiceStateUpdate(oldState, newState));
@@ -64,7 +61,7 @@ export class Bot implements IDisposable{
     }
 
     public start() : void{
-        this._client.login(this._token)
+        this._client.login('NzU1MzU1NTU3MTA3NDY2MzAw.X2CFrg.IJf7kBEF4-1YITe_19dQBcBGKCE')
             .then(bot => console.log(`Successfully logged in as ${bot}`))
             .catch(console.error);
     }
@@ -85,16 +82,17 @@ export class Bot implements IDisposable{
             for(const command of this._commands){
                 if(command.CommandName == commandName){
                     command.execute(msg, args);
+                    break;
                 }
             }
-
-            await msg.delete();
+            //await msg.delete();
         }
         catch(error)
         {
             if(error instanceof BotException){
                 error.Handle(msg);
             }
+            console.log(error);
         }
     }
 
@@ -153,7 +151,7 @@ export class Bot implements IDisposable{
         await parent.delete();
     }
 
-    public dispose(): void {
+    public dispose() : void {
         this._client.destroy();
     }
 }

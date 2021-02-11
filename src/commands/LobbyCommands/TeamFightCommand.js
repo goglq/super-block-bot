@@ -14,12 +14,15 @@ class TeamFightCommand extends CommandBase_1.CommandBase {
             firstTeamName = args[args.indexOf('-t1') + 1];
             secondTeamName = args[args.indexOf('-t2') + 1];
         }
-        let roles = await this.CreateRoles(msg, firstTeamName, secondTeamName);
+        let roles = await this.CreateRoles(msg, firstTeamName, secondTeamName, args);
         await this.GrantRoles(msg, args, roles);
         let parentCategory = await this.CreateVoiceChannels(msg, firstTeamName, secondTeamName, roles);
         setTimeout(async () => await this.DeleteVoiceChannelsOnTimeOut(parentCategory, roles), 5000);
     }
-    async CreateRoles(msg, firstTeamName, secondTeamName) {
+    async CreateRoles(msg, firstTeamName, secondTeamName, args) {
+        let playerMentionStarts = [args.indexOf('-p1'), args.indexOf('-p2')];
+        if (playerMentionStarts[0] <= -1 || playerMentionStarts[1] <= -1)
+            throw new NoRequiredParameterException_1.NoRequiredParameterException();
         let firstTeamRole = await msg.guild.roles.create({
             data: {
                 name: firstTeamName,

@@ -16,13 +16,16 @@ export class TeamFightCommand extends CommandBase{
             secondTeamName = args[args.indexOf('-t2') + 1];
         }
 
-        let roles : [Role, Role] = await this.CreateRoles(msg, firstTeamName, secondTeamName);
+        let roles : [Role, Role] = await this.CreateRoles(msg, firstTeamName, secondTeamName, args);
         await this.GrantRoles(msg, args, roles);
+
         let parentCategory = await this.CreateVoiceChannels(msg, firstTeamName, secondTeamName, roles);
         setTimeout(async () => await this.DeleteVoiceChannelsOnTimeOut(parentCategory, roles), 5000);
     }
 
-    private async CreateRoles(msg :Message, firstTeamName :string, secondTeamName :string) :Promise<[Role , Role]>{
+    private async CreateRoles(msg :Message, firstTeamName :string, secondTeamName :string, args: string[]) :Promise<[Role , Role]>{
+        let playerMentionStarts : [number, number] = [args.indexOf('-p1'), args.indexOf('-p2')]; 
+        if(playerMentionStarts[0] <= -1 || playerMentionStarts[1] <= -1) throw new NoRequiredParameterException();
         let firstTeamRole :Role = await msg.guild.roles.create({
             data:{
                 name: firstTeamName,
