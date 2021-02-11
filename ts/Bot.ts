@@ -53,7 +53,7 @@ export class Bot implements IDisposable{
     private constructor(){
         dotenv.config({path: __dirname+'/../.env'});
         this._client = new Client();
-        this._prefix = '!';
+        this._prefix = process.env.PREFIX;
         this._token = process.env.TOKEN;
         this._client.on('message', (message : Message) => this.onMessageRecieved(message, this._prefix));
         this._client.on('voiceStateUpdate', async (oldState, newState) => await this.onVoiceStateUpdate(oldState, newState));
@@ -61,7 +61,7 @@ export class Bot implements IDisposable{
     }
 
     public start() : void{
-        this._client.login('NzU1MzU1NTU3MTA3NDY2MzAw.X2CFrg.IJf7kBEF4-1YITe_19dQBcBGKCE')
+        this._client.login(this._token)
             .then(bot => console.log(`Successfully logged in as ${bot}`))
             .catch(console.error);
     }
