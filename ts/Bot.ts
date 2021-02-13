@@ -123,8 +123,8 @@ export class Bot implements IDisposable{
 
     private async deleteLobbyChannelsAndRoles(oldState : VoiceState, newState : VoiceState) {
         if(this._lobbyCategoryId === undefined) return;
-        if(oldState.channel == null && (oldState.channel.members.size > 0 || oldState.channel.parentID != this._lobbyCategoryId)) return;
-         
+        if(oldState.channel == null && oldState.channel.members.size > 0 && oldState.channel.parentID != this._lobbyCategoryId) return;
+        
         if(oldState.channel.permissionOverwrites.size > 0){
             let poID : string = oldState.channel.permissionOverwrites.filter(po => po.id != oldState.guild.roles.everyone.id).firstKey();
             console.log(poID);
