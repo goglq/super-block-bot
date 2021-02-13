@@ -57,7 +57,7 @@ export class CreateLobbyCommand extends CommandBase{
     }
 
     private async DeleteChannelOnTimeOut(channel :GuildChannel): Promise<void>{
-        if(channel.members.size != 0) return;
+        if(channel.members.size > 0) return;
         let channelPermissions = channel.permissionOverwrites
             .filter(permissionOverwrite => permissionOverwrite.id != channel.guild.roles.everyone.id)
             .values();
