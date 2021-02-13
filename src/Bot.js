@@ -99,8 +99,12 @@ class Bot {
     async deleteLobbyChannelsAndRoles(oldState, newState) {
         if (this._lobbyCategoryId === undefined)
             return;
-        if ((oldState.channel == null || oldState.channel.members.size > 0)
-            || (oldState.channel.parentID != this._lobbyCategoryId || oldState.channelID != this._waitChannelId))
+        if (newState.selfMute != oldState.selfMute ||
+            newState.selfDeaf != oldState.selfDeaf ||
+            newState.selfVideo != oldState.selfVideo ||
+            newState.streaming != oldState.streaming)
+            return;
+        if (oldState.channel === null && oldState.channel.members.size > 0 && oldState.channel.parentID != this._lobbyCategoryId)
             return;
         if (oldState.channel.permissionOverwrites.size > 0) {
             let poID = oldState.channel.permissionOverwrites.filter(po => po.id != oldState.guild.roles.everyone.id).firstKey();
@@ -110,8 +114,12 @@ class Bot {
         await oldState.channel.delete();
     }
     async deleteCategoriesAndChildren(oldState, newState) {
-        if (oldState.channel == null && oldState.channel.parentID == this._lobbyCategoryId
-            && oldState.channelID == this._waitChannelId)
+        if (oldState.channel === null && oldState.channel.parentID == this._lobbyCategoryId)
+            return;
+        if (newState.selfMute != oldState.selfMute ||
+            newState.selfDeaf != oldState.selfDeaf ||
+            newState.selfVideo != oldState.selfVideo ||
+            newState.streaming != oldState.streaming)
             return;
         let parent = oldState.channel.parent;
         for (const voiceChannel of parent.children.filter(i => typeof (i) == typeof (discord_js_1.VoiceChannel)).values()) {

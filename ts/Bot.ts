@@ -121,10 +121,14 @@ export class Bot implements IDisposable{
         await this.deleteCategoriesAndChildren(oldState, newState);
     }
 
-    private async deleteLobbyChannelsAndRoles(oldState : VoiceState, newState : VoiceState) {
+    private async deleteLobbyChannelsAndRoles(oldState : VoiceState, newState : VoiceState) : Promise<void> {
         if(this._lobbyCategoryId === undefined) return;
-        if(oldState.channel == null && oldState.channel.members.size > 0 && oldState.channel.parentID != this._lobbyCategoryId) return;
-        
+        if(newState.selfMute != oldState.selfMute || 
+            newState.selfDeaf != oldState.selfDeaf || 
+            newState.selfVideo != oldState.selfVideo || 
+            newState.streaming != oldState.streaming) return;
+        if(oldState.channel === null && oldState.channel.members.size > 0 && oldState.channel.parentID != this._lobbyCategoryId) return;
+
         if(oldState.channel.permissionOverwrites.size > 0){
             let poID : string = oldState.channel.permissionOverwrites.filter(po => po.id != oldState.guild.roles.everyone.id).firstKey();
             console.log(poID);
@@ -135,8 +139,11 @@ export class Bot implements IDisposable{
     }
 
     private async deleteCategoriesAndChildren(oldState : VoiceState, newState : VoiceState) : Promise<void>{
-        if(oldState.channel == null && oldState.channel.parentID == this._lobbyCategoryId 
-            && oldState.channelID == this._waitChannelId) return;
+        if(oldState.channel === null && oldState.channel.parentID == this._lobbyCategoryId) return;
+        if(newState.selfMute != oldState.selfMute || 
+            newState.selfDeaf != oldState.selfDeaf || 
+            newState.selfVideo != oldState.selfVideo || 
+            newState.streaming != oldState.streaming) return;
 
         let parent : CategoryChannel = oldState.channel.parent;
         for(const voiceChannel of parent.children.filter(i => typeof(i) == typeof(VoiceChannel)).values()){
